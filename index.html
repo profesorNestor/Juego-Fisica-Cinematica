@@ -51,8 +51,8 @@
         .modal-content { background: rgba(20, 20, 45, 0.95); border: 2px solid var(--primary-color); padding: 25px; border-radius: 15px; text-align: center; width: 100%; max-width: 600px; color: var(--text-color); box-shadow: 0 0 30px rgba(0, 250, 255, 0.6); max-height: 90vh; overflow-y: auto; }
         .modal-content h2 { font-family: 'Orbitron', sans-serif; color: var(--primary-color); font-size: 1.8rem; margin-bottom: 15px; text-shadow: 0 0 10px var(--primary-color); }
         .modal-content p { font-size: 1rem; line-height: 1.7; margin-bottom: 20px; }
-        #solution-container, #curiosity-container { margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(0, 250, 255, 0.3); text-align: left; font-size: 1rem; }
-        #solution-container h4, #curiosity-container h4 { font-family: 'Orbitron', sans-serif; color: var(--primary-color); margin-bottom: 10px; }
+        #solution-container, #curiosity-container, #final-message-container { margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(0, 250, 255, 0.3); text-align: left; font-size: 1rem; }
+        #solution-container h4, #curiosity-container h4, #final-message-container h4 { font-family: 'Orbitron', sans-serif; color: var(--primary-color); margin-bottom: 10px; }
         .topic-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 20px 0; }
         .checkbox-container { display: flex; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px; cursor: pointer; }
         .checkbox-container input { display: none; }
@@ -108,7 +108,7 @@
     <div id="curiosity-modal" class="modal"><div class="modal-content"><h2 class="font-orbitron">Dato Curioso 🧑‍🚀🔭</h2><div id="curiosity-container"></div><button onclick="hideCuriosityModal()" class="game-button" style="margin-top: 20px;">¡Entendido!</button></div></div>
     <div id="help-modal" class="modal"><div class="modal-content"><h2 class="font-orbitron">Manual del Piloto</h2><div style="text-align: left; font-size: 0.9rem; line-height: 1.8;"><p><strong>🚀 Misión:</strong> Responde preguntas de física. ¡Cada error cuesta una vida!</p><p><strong>🌌 Exploración:</strong> La nave viaja sola. Choca con meteoritos para descubrir datos curiosos y pistas.</p><p><strong>❤️ Vidas:</strong> Empiezas con 5. ¡No las pierdas!</p></div><button onclick="document.getElementById('help-modal').style.display = 'none'" class="game-button" style="margin-top: 30px;">¡Entendido!</button></div></div>
     <div id="pause-modal" class="modal"><div class="modal-content"><h2 class="font-orbitron">Juego en Pausa</h2><p>Tómate un respiro. ¡El universo esperará!</p><button onclick="togglePause()" class="game-button">Continuar Misión ▶️</button></div></div>
-    <div id="end-level-modal" class="modal"><div class="modal-content"><h2 id="end-level-title" class="font-orbitron"></h2><p id="end-level-text"></p><p id="end-level-stats"></p><button id="end-level-button" class="game-button">Continuar</button></div></div>
+    <div id="end-level-modal" class="modal"><div class="modal-content"><h2 id="end-level-title" class="font-orbitron"></h2><p id="end-level-text"></p><p id="end-level-stats"></p><div id="final-message-container"></div><button id="end-level-button" class="game-button">Continuar</button></div></div>
     <div id="confirm-modal" class="modal"><div class="modal-content"><h2 id="confirm-title" class="font-orbitron">¿Estás seguro?</h2><p id="confirm-text">Perderás todo tu progreso actual.</p><div class="flex justify-center gap-4 mt-4"><button onclick="document.getElementById('confirm-modal').style.display = 'none'" class="game-button">Cancelar</button><button onclick="location.reload()" class="game-button" style="border-color: var(--error-color); color: var(--error-color);">Sí, reiniciar</button></div></div></div>
 
     <script>
@@ -248,10 +248,20 @@
             else { showFeedbackModal(title, text, q.solution); }
         }, 1200);
     }
+    
+    function getPerformanceMessage(grade) {
+        if (grade >= 4.5) return "<h4>Mensaje del Comando Estelar:</h4><p>¡Extraordinario! Demuestras un dominio total del cosmos. Eres una leyenda de la física.</p>";
+        if (grade >= 3.5) return "<h4>Mensaje del Comando Estelar:</h4><p>¡Muy bien hecho, piloto! Tus habilidades son impresionantes. Sigue así.</p>";
+        if (grade >= 2.5) return "<h4>Mensaje del Comando Estelar:</h4><p>¡Buen esfuerzo! Estás en el camino correcto. La práctica te hará un maestro.</p>";
+        return "<h4>Mensaje del Comando Estelar:</h4><p>La galaxia es un lugar desafiante. ¡No te rindas! Cada error es una oportunidad para aprender.</p>";
+    }
+
     function endLevel() {
         playSound('start');
+        const finalGrade = (gameState.totalCorrect / gameState.totalAnswered) * 5 || 0;
         const title = `🏁 ¡Nivel ${gameState.level} Completado! 🏁`;
-        const stats = `Puntuación: ${gameState.score} | Precisión: ${((gameState.totalCorrect / gameState.totalAnswered) * 100 || 0).toFixed(0)}%`;
+        const stats = `Puntuación: ${gameState.score} | Precisión: ${((gameState.totalCorrect / gameState.totalAnswered) * 100 || 0).toFixed(0)}% | Nota Final: ${finalGrade.toFixed(1)}`;
+        const message = getPerformanceMessage(finalGrade);
         let text, btnText;
         if (levelConfig[gameState.level + 1]) {
             text = "¿Listo para el siguiente desafío?"; btnText = `Ir al Nivel ${gameState.level + 1}`;
@@ -261,17 +271,20 @@
             document.getElementById('end-level-button').onclick = () => location.reload();
             gameState.isGameOver = true;
         }
-        showEndLevelModal(title, text, stats, btnText);
+        showEndLevelModal(title, text, stats, message, btnText);
     }
+
     function gameOver() {
         playSound('incorrect');
         gameState.isGameOver = true;
+        const finalGrade = (gameState.totalCorrect / gameState.totalAnswered) * 5 || 0;
         const title = "💥 GAME OVER 💥";
         const text = "Te has quedado sin vidas. ¡Pero puedes volver a intentarlo!";
-        const stats = `Nivel: ${gameState.level} | Puntuación: ${gameState.score}`;
+        const stats = `Nivel: ${gameState.level} | Puntuación: ${gameState.score} | Nota Final: ${finalGrade.toFixed(1)}`;
+        const message = getPerformanceMessage(finalGrade);
         const btnText = "Reiniciar Juego";
         document.getElementById('end-level-button').onclick = () => location.reload();
-        showEndLevelModal(title, text, stats, btnText);
+        showEndLevelModal(title, text, stats, message, btnText);
     }
     function shuffleArray(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
@@ -303,10 +316,11 @@
         document.getElementById('feedback-modal').style.display = 'flex';
     }
     function hideFeedbackModal() { document.getElementById('feedback-modal').style.display = 'none'; nextQuestion(); }
-    function showEndLevelModal(title, text, stats, btnText) {
+    function showEndLevelModal(title, text, stats, message, btnText) {
         document.getElementById('end-level-title').textContent = title;
         document.getElementById('end-level-text').textContent = text;
         document.getElementById('end-level-stats').textContent = stats;
+        document.getElementById('final-message-container').innerHTML = message;
         document.getElementById('end-level-button').textContent = btnText;
         document.getElementById('end-level-modal').style.display = 'flex';
     }
